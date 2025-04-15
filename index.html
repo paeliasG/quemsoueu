@@ -1,280 +1,186 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <title>MagnetariX: Cosmic Flow</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Magnetrix: Cosmic Flow</title>
   <style>
     body, html {
       margin: 0;
       overflow: hidden;
-      background: black;
       font-family: 'Orbitron', sans-serif;
+      background: #000;
       color: white;
     }
     canvas {
       display: block;
     }
-    #startScreen {
+    #startScreen, #optionsMenu {
       position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: linear-gradient(180deg, #000, #111);
+      width: 100%;
+      height: 100%;
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
-      z-index: 10;
-      text-align: center;
+      justify-content: center;
+      background: radial-gradient(circle, #111 0%, #000 100%);
     }
-    #startScreen h1 {
-      font-size: 4em;
-      color: #0ff;
-      text-shadow: 0 0 20px #0ff;
-      margin-bottom: 20px;
+    h1 {
+      font-size: 3rem;
+      color: #49fcd4;
+      text-shadow: 0 0 20px #49fcd4;
+      margin-bottom: 2rem;
     }
-    #startBtn {
-      padding: 15px 30px;
-      font-size: 1.2em;
-      border: none;
-      border-radius: 10px;
-      background: #0f0;
-      color: black;
-      cursor: pointer;
-    }
-    #optionsBtn {
-      position: fixed;
-      top: 10px;
-      left: 10px;
-      z-index: 5;
-      background: #222;
-      color: white;
-      padding: 10px 20px;
-      border: none;
+    button, input[type=range], select {
+      margin: 0.5rem;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
       border-radius: 8px;
-      cursor: pointer;
+      border: none;
     }
-    #controls {
-      position: fixed;
-      top: 60px;
-      left: 10px;
-      background: rgba(0, 0, 0, 0.7);
-      padding: 20px;
-      border-radius: 12px;
-      z-index: 5;
-      display: none;
-    }
-    #controls label, #controls select, #controls input, #controls button {
-      display: block;
-      margin-top: 10px;
-      font-size: 14px;
-      width: 250px;
+    #optionsMenu {
+      top: auto;
+      left: auto;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 10;
+      padding: 1rem;
+      position: absolute;
     }
   </style>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
 </head>
 <body>
   <div id="startScreen">
-    <h1>MagnetariX: Cosmic Flow</h1>
-    <label for="startMusic">Música da Tela Inicial:</label>
-    <select id="startMusic">
-      <option value="sine">Tranquilo</option>
-      <option value="triangle">Suave</option>
-      <option value="sawtooth">Espacial</option>
-    </select>
-    <button id="startBtn">Começar Jornada</button>
-  </div>
-
-  <button id="optionsBtn">Opções</button>
-  <div id="controls">
-    <label for="volumeControl">Volume da Música</label>
-    <input type="range" id="volumeControl" min="0" max="1" step="0.01" value="0.2">
-
-    <label for="gameMusic">Música no Jogo</label>
-    <select id="gameMusic">
-      <option value="sine">Tranquilo</option>
-      <option value="triangle">Suave</option>
-      <option value="sawtooth">Espacial</option>
-    </select>
-
-    <label for="mode">Modo de Campo</label>
-    <select id="mode">
-      <option value="normal">Puxar Direto</option>
-      <option value="espiral">Espiral</option>
-      <option value="repulsao">Repulsão</option>
-      <option value="caos">Caos</option>
-      <option value="orbita">Órbita</option>
-    </select>
-
-    <label for="slider">Partículas: <span id="count">200</span></label>
-    <input type="range" id="slider" min="10" max="1000" value="200">
-
-    <button id="returnHome">Voltar à Tela Inicial</button>
+    <h1>Magnetrix: Cosmic Flow</h1>
+    <button onclick="startGame()">Play</button>
+    <label>Menu Music:
+      <select id="menuMusicSelect">
+        <option value="1">Lo-fi Menu 1</option>
+        <option value="2">Lo-fi Menu 2</option>
+        <option value="3">Lo-fi Menu 3</option>
+      </select>
+    </label>
   </div>
 
   <canvas id="canvas"></canvas>
+
+  <div id="optionsMenu" style="display:none;">
+    <label>Volume: <input type="range" id="volumeControl" min="0" max="1" step="0.01" value="0.4"></label>
+    <label>Particles: <input type="range" id="particleCount" min="50" max="800" value="300"></label>
+    <label>Mode:
+      <select id="modeSelect">
+        <option value="attract">Orbitar</option>
+        <option value="repel">Repulsão</option>
+        <option value="chaos">Caos</option>
+      </select>
+    </label>
+    <label>Game Music:
+      <select id="gameMusicSelect">
+        <option value="1">Lo-fi 1</option>
+        <option value="2">Lo-fi 2</option>
+        <option value="3">Lo-fi 3</option>
+      </select>
+    </label>
+    <button onclick="stopGame()">Voltar ao Menu</button>
+  </div>
+
   <script>
-    const canvas = document.getElementById("canvas");
-    const ctx = canvas.getContext("2d");
-    const slider = document.getElementById("slider");
-    const countDisplay = document.getElementById("count");
-    const modeSelect = document.getElementById("mode");
-    const controls = document.getElementById("controls");
-    const optionsBtn = document.getElementById("optionsBtn");
-    const volumeControl = document.getElementById("volumeControl");
-    const gameMusicSelect = document.getElementById("gameMusic");
-    const startMusicSelect = document.getElementById("startMusic");
-    const returnHome = document.getElementById("returnHome");
+    let canvas = document.getElementById('canvas');
+    let ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
-    let w, h;
     let particles = [];
-    let target = { x: null, y: null };
-    let repulsionActive = false;
-    let mode = "normal";
-    const colors = ["#00f", "#0ff", "#0f0", "#ff0", "#f00", "#f0f"];
+    let mouse = { x: null, y: null, down: false };
+    let mode = 'attract';
+    let volume = 0.4;
+    let currentMusic;
 
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    const audioCtx = new AudioContext();
-    let oscillator, gain;
+    const musicTracks = {
+      menu: [
+        new Audio('https://example.com/menu1.mp3'),
+        new Audio('https://example.com/menu2.mp3'),
+        new Audio('https://example.com/menu3.mp3')
+      ],
+      game: [
+        new Audio('https://example.com/game1.mp3'),
+        new Audio('https://example.com/game2.mp3'),
+        new Audio('https://example.com/game3.mp3')
+      ]
+    };
 
-    function resize() {
-      w = canvas.width = window.innerWidth;
-      h = canvas.height = window.innerHeight;
+    function startGame() {
+      document.getElementById('startScreen').style.display = 'none';
+      document.getElementById('optionsMenu').style.display = 'flex';
+      switchMusic('game', document.getElementById('gameMusicSelect').value);
     }
-    window.addEventListener("resize", resize);
-    resize();
 
-    function createParticle() {
-      return {
-        x: Math.random() * w,
-        y: Math.random() * h,
-        vx: (Math.random() - 0.5) * 2,
-        vy: (Math.random() - 0.5) * 2,
-        size: Math.random() * 4 + 1,
-        color: colors[Math.floor(Math.random() * colors.length)],
+    function stopGame() {
+      document.getElementById('startScreen').style.display = 'flex';
+      document.getElementById('optionsMenu').style.display = 'none';
+      switchMusic('menu', document.getElementById('menuMusicSelect').value);
+    }
+
+    function switchMusic(type, index) {
+      if (currentMusic) currentMusic.pause();
+      currentMusic = musicTracks[type][parseInt(index) - 1];
+      currentMusic.loop = true;
+      currentMusic.volume = volume;
+      currentMusic.play();
+    }
+
+    function Particle() {
+      this.x = Math.random() * canvas.width;
+      this.y = Math.random() * canvas.height;
+      this.vx = (Math.random() - 0.5) * 1;
+      this.vy = (Math.random() - 0.5) * 1;
+      this.update = () => {
+        if (mouse.down) {
+          let dx = mouse.x - this.x;
+          let dy = mouse.y - this.y;
+          let dist = Math.sqrt(dx * dx + dy * dy);
+          let force = mode === 'chaos' ? (Math.random() - 0.5) * 2 : 1 / (dist + 1);
+
+          if (mode === 'attract') {
+            this.vx += dx * force * 0.01;
+            this.vy += dy * force * 0.01;
+          } else if (mode === 'repel') {
+            this.vx -= dx * force * 0.01;
+            this.vy -= dy * force * 0.01;
+          } else if (mode === 'chaos') {
+            this.vx += force;
+            this.vy += force;
+          }
+        }
+
+        this.x += this.vx;
+        this.y += this.vy;
+      };
+
+      this.draw = () => {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
+        ctx.fillStyle = 'white';
+        ctx.fill();
       };
     }
 
-    function setParticleCount(count) {
-      while (particles.length < count) particles.push(createParticle());
-      while (particles.length > count) particles.pop();
-      countDisplay.textContent = particles.length;
-    }
-
-    function applyForce(p, dx, dy, distSq, dist) {
-      let force = 100 / (distSq + 100);
-      switch (mode) {
-        case "normal": p.vx += force * dx; p.vy += force * dy; break;
-        case "espiral": p.vx += force * (-dy); p.vy += force * dx; break;
-        case "repulsao": p.vx -= force * dx; p.vy -= force * dy; break;
-        case "caos":
-          let angle = Math.random() * Math.PI * 2;
-          p.vx += force * Math.cos(angle);
-          p.vy += force * Math.sin(angle);
-          break;
-        case "orbita":
-          let orbitForce = force * 2;
-          p.vx += orbitForce * (-dy / dist);
-          p.vy += orbitForce * (dx / dist);
-          break;
+    function initParticles(count = 300) {
+      particles = [];
+      for (let i = 0; i < count; i++) {
+        particles.push(new Particle());
       }
     }
 
-    function draw() {
-      ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
-      ctx.fillRect(0, 0, w, h);
-
-      for (let p of particles) {
-        if (target.x !== null && target.y !== null) {
-          let dx = target.x - p.x;
-          let dy = target.y - p.y;
-          let distSq = dx * dx + dy * dy;
-          let dist = Math.sqrt(distSq);
-          applyForce(p, dx, dy, distSq, dist);
-        }
-        if (repulsionActive) {
-          let angle = Math.random() * Math.PI * 2;
-          p.vx += Math.random() * 1.5 * Math.cos(angle);
-          p.vy += Math.random() * 1.5 * Math.sin(angle);
-        }
-        p.vx += (Math.random() - 0.5) * 0.05;
-        p.vy += (Math.random() - 0.5) * 0.05;
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vx *= 0.99;
-        p.vy *= 0.99;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = p.color;
-        ctx.fill();
-      }
-      requestAnimationFrame(draw);
+    function animate() {
+      requestAnimationFrame(animate);
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        p.update();
+        p.draw();
+      });
     }
 
-    function updateTarget(e) {
-      const rect = canvas.getBoundingClientRect();
-      if (e.touches) {
-        target.x = e.touches[0].clientX - rect.left;
-        target.y = e.touches[0].clientY - rect.top;
-      } else {
-        target.x = e.clientX - rect.left;
-        target.y = e.clientY - rect.top;
-      }
-    }
-
-    function clearTarget() {
-      target.x = null;
-      target.y = null;
-    }
-
-    function startMusic(type) {
-      if (oscillator) oscillator.stop();
-      oscillator = audioCtx.createOscillator();
-      gain = audioCtx.createGain();
-      oscillator.type = type;
-      oscillator.frequency.setValueAtTime(220, audioCtx.currentTime);
-      gain.gain.value = volumeControl.value;
-      oscillator.connect(gain).connect(audioCtx.destination);
-      oscillator.start();
-      setInterval(() => {
-        let freq = 180 + Math.random() * 80;
-        oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
-      }, 3000);
-    }
-
-    document.getElementById("startBtn").addEventListener("click", () => {
-      document.getElementById("startScreen").style.display = "none";
-      optionsBtn.style.display = "block";
-      setParticleCount(parseInt(slider.value));
-      draw();
-      audioCtx.resume().then(() => startMusic(gameMusicSelect.value));
-    });
-
-    optionsBtn.addEventListener("click", () => {
-      controls.style.display = controls.style.display === "none" ? "block" : "none";
-    });
-
-    gameMusicSelect.addEventListener("change", () => {
-      if (oscillator) startMusic(gameMusicSelect.value);
-    });
-
-    returnHome.addEventListener("click", () => {
-      document.getElementById("startScreen").style.display = "flex";
-      controls.style.display = "none";
-      optionsBtn.style.display = "none";
-      if (oscillator) oscillator.stop();
-      oscillator = null;
-    });
-
-    canvas.addEventListener("mousemove", updateTarget);
-    canvas.addEventListener("touchmove", updateTarget);
-    canvas.addEventListener("touchstart", updateTarget);
-    canvas.addEventListener("mouseleave", clearTarget);
-    canvas.addEventListener("touchend", () => { clearTarget(); repulsionActive = true; setTimeout(() => repulsionActive = false, 500); });
-    canvas.addEventListener("mouseup", () => { clearTarget(); repulsionActive = true; setTimeout(() => repulsionActive = false, 500); });
-
-    slider.addEventListener("input", () => setParticleCount(parseInt(slider.value)));
-    modeSelect.addEventListener("change", () => mode = modeSelect.value);
-    volumeControl.addEventListener("input", () => { if (gain) gain.gain.value = volumeControl.value; });
-  </script>
-</body>
-</html>
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height =2
